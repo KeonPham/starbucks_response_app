@@ -63,13 +63,15 @@ with col2:
 with col3:
     social = st.number_input('Number of Interactions via Social Media: ', min_value=0, step=1)
     membership_duration = st.number_input('Membership Duration (days): ', min_value=0, step=1)
-    difficulty_income_interaction = st.number_input('Difficulty-Income Interaction: ', min_value=0.0, step=0.1)
     gender_F = st.selectbox('Gender (Female=1, else=0)', (0, 1))
     gender_M = st.selectbox('Gender (Male=1, else=0)', (0, 1))
     gender_O = st.selectbox('Gender (Other=1, else=0)', (0, 1))
     year_become_member = st.number_input('Year Became a Member: ', min_value=2015, max_value=2024, step=1)
     month_become_member = st.number_input('Month Became a Member (1-12): ', min_value=1, max_value=12, step=1)
     date_become_member = st.number_input('Date Became a Member (1-31): ', min_value=1, max_value=31, step=1)
+
+# Automatically calculate difficulty-income interaction
+difficulty_income_interaction = difficulty * income
 
 # Compile input data into a DataFrame
 data = {
