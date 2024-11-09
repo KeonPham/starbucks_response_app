@@ -1,66 +1,64 @@
-import altair as alt
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import joblib
 
-# Show the page title and description.
-st.set_page_config(page_title="Movies dataset", page_icon="🎬")
-st.title("🎬 Movies dataset")
-st.write(
-    """
-    This app visualizes data from [The Movie Database (TMDB)](https://www.kaggle.com/datasets/tmdb/tmdb-movie-metadata).
-    It shows which movie genre performed best at the box office over the years. Just 
-    click on the widgets below to explore!
-    """
-)
+st.title(':blue[Starbucks Customer Response Prediction]')
+st.write("""-- This app predicts whether a customer will respond to a specific offer --
+
+""")
+st.write(':point_left: (click arrow sign to hide or unhide the form) :green[Please fill out the input fields below for prediction.] :sunglasses:')
 
 
-# Load the data from a CSV. We're caching this so it doesn't reload every time the app
-# reruns (e.g. if the user interacts with the widgets).
-@st.cache_data
-def load_data():
-    df = pd.read_csv("data/movies_genres_summary.csv")
-    return df
+# Collect user input features into a DataFrame
+def user_input_features():
+    amount = st.number_input('Total Transaction Amount ($): ')
+    time = st.number_input('Time (minutes): ')
+    age = st.number_input('Age of Customer: ')
+    income = st.number_input('Annual Income ($): ')
+    difficulty = st.number_input('Offer Difficulty (0, 5, 7, 10, 20): ')
+    duration = st.number_input('Offer Duration (days) - (3, 4, 5, 7, 10): ')
+    offer_type_bogo = st.slider('Proportion of Offer Type - BOGO (0-1 scale): ', 0.0, 1.0, 0.0)
+    offer_type_discount = st.slider('Proportion of Offer Type - Discount (0-1 scale): ', 0.0, 1.0, 0.0)
+    offer_type_informational = st.slider('Proportion of Offer Type - Informational (0-1 scale): ', 0.0, 1.0, 0.0)
+    web = st.number_input('Number of Interactions via Web: ')
+    email = st.number_input('Number of Interactions via Email: ')
+    mobile = st.number_input('Number of Interactions via Mobile: ')
+    social = st.number_input('Number of Interactions via Social Media: ')
+    membership_duration = st.number_input('Membership Duration (days): ')
+    difficulty_income_interaction = st.number_input('Difficulty-Income Interaction: ')
+    gender_F = st.selectbox('Gender (Female=1, else=0)', (0, 1))
+    gender_M = st.selectbox('Gender (Male=1, else=0)', (0, 1))
+    gender_O = st.selectbox('Gender (Other=1, else=0)', (0, 1))
+    year_become_member = st.number_input('Year Became a Member: ', min_value=2015, max_value=2024, step=1)
+    month_become_member = st.number_input('Month Became a Member (1-12): ', min_value=1, max_value=12, step=1)
+    date_become_member = st.number_input('Date Became a Member (1-31): ', min_value=1, max_value=31, step=1)
 
+    data = {
+        'amount': amount, 'time': time, 'age': age, 'income': income, 'difficulty': difficulty, 'duration': duration,
+        'offer_type_bogo': offer_type_bogo, 'offer_type_discount': offer_type_discount,
+        'offer_type_informational': offer_type_informational, 'web': web, 'email': email, 'mobile': mobile,
+        'social': social, 'membership_duration': membership_duration, 'difficulty_income_interaction': difficulty_income_interaction,
+        'gender_F': gender_F, 'gender_M': gender_M, 'gender_O': gender_O, 'year_become_member': year_become_member,
+        'month_become_member': month_become_member, 'date_become_member': date_become_member
+    }
+    features = pd.DataFrame(data, index=[0])
+    return features
 
-df = load_data()
+input_df = user_input_features()
 
-# Show a multiselect widget with the genres using `st.multiselect`.
-genres = st.multiselect(
-    "Genres",
-    df.genre.unique(),
-    ["Action", "Adventure", "Biography", "Comedy", "Drama", "Horror"],
-)
+st.write(input_df)
 
-# Show a slider widget with the years using `st.slider`.
-years = st.slider("Years", 1986, 2006, (2000, 2016))
+def predict(data):
+    clf = joblib.load("model_file.p")
+    return clf.predict(data)
 
-# Filter the dataframe based on the widget input and reshape it.
-df_filtered = df[(df["genre"].isin(genres)) & (df["year"].between(years[0], years[1]))]
-df_reshaped = df_filtered.pivot_table(
-    index="year", columns="genre", values="gross", aggfunc="sum", fill_value=0
-)
-df_reshaped = df_reshaped.sort_values(by="year", ascending=False)
+# Apply model to make predictions
+if st.button("Click here to Predict Customer Response"):
+    result = predict(input_df)
 
-
-# Display the data as a table using `st.dataframe`.
-st.dataframe(
-    df_reshaped,
-    use_container_width=True,
-    column_config={"year": st.column_config.TextColumn("Year")},
-)
-
-# Display the data as an Altair chart using `st.altair_chart`.
-df_chart = pd.melt(
-    df_reshaped.reset_index(), id_vars="year", var_name="genre", value_name="gross"
-)
-chart = (
-    alt.Chart(df_chart)
-    .mark_line()
-    .encode(
-        x=alt.X("year:N", title="Year"),
-        y=alt.Y("gross:Q", title="Gross earnings ($)"),
-        color="genre:N",
-    )
-    .properties(height=320)
-)
-st.altair_chart(chart, use_container_width=True)
+    if result[0] == 0:
+        st.subheader('The Customer :red[will not respond] to the offer. :sunglasses:')
+    elif result[0] == 1:
+        st.subheader('The Customer :red[will partially respond] to the offer. :sunglasses:')
+    else:
+        st.subheader('The Customer :green[will respond] to the offer! :smiley:')
