@@ -224,18 +224,32 @@ def predict(data):
     probabilities = clf.predict_proba(data)
     return prediction, probabilities
 
+# Mapping predictions to labels
+prediction_mapping = {
+    0: "No Response",
+    1: "Partial Response",
+    2: "Full Response"
+}
+
 # Apply model to make predictions
 st.write("""---""")
 if st.button("Click here to Predict Customer Response"):
     result, probabilities = predict(input_df)
-    input_df['Prediction'] = result
-    input_df['Probability'] = [f"{probabilities[i][pred] * 100:.2f}%" for i, pred in enumerate(result)]
+    # Map predictions to their labels
+    input_df['Prediction'] = [prediction_mapping[pred] for pred in result]
+    # Add probability for each prediction
+    input_df['Probability'] = [f"{probabilities[i][result[i]] * 100:.2f}%" for i in range(len(result))]
 
+    # Display results
     st.write("Prediction Results:")
     st.dataframe(input_df)
+
+    # Allow downloading results as an Excel file
+    output_file_path = "prediction_results.xlsx"
+    input_df.to_excel(output_file_path, index=False)
     st.download_button(
         label="Download Results",
-        data=input_df.to_csv(index=False),
-        file_name="prediction_results.csv",
-        mime="text/csv"
+        data=input_df.to_excel(index=False, engine='openpyxl'),
+        file_name="prediction_results.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
