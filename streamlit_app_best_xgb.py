@@ -225,6 +225,20 @@ def predict(data):
     probabilities = clf.predict_proba(data)
     return prediction, probabilities
 
+# Apply model to make predictions for single input
+if input_option == "Manual Input":
+    st.write("""---""")
+    if st.button("Click here to Predict Customer Response"):
+        result, probabilities = predict(input_df)
+        probability = probabilities[0][result[0]] * 100  # Get probability for the predicted class
+
+        if result[0] == 0:
+            st.subheader(f'🔴 The Customer :red[will not respond] to the offers. Probability: {probability:.2f}%')
+        elif result[0] == 1:
+            st.subheader(f'🟠 The Customer :orange[will partially respond] to the offers. Probability: {probability:.2f}%')
+        else:
+            st.subheader(f'🟢 The Customer :green[will respond] to the offers! Probability: {probability:.2f}% :smiley:')
+
 # Mapping predictions to labels
 prediction_mapping = {
     0: "No Response",
