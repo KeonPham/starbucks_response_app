@@ -217,6 +217,13 @@ else:
         input_df = pd.read_excel(uploaded_file)
         st.write("Uploaded Data:")
         st.dataframe(input_df)
+        
+# Prediction function
+def predict(data):
+    clf = joblib.load("model_file_best_xgb.p")
+    prediction = clf.predict(data)
+    probabilities = clf.predict_proba(data)
+    return prediction, probabilities
 
 # Mapping predictions to labels
 prediction_mapping = {
