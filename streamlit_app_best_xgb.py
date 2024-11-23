@@ -228,7 +228,7 @@ def predict(data):
 # Apply model to make predictions for single input
 if input_option == "Manual Input":
     st.write("""---""")
-    if st.button("Click here to Predict Customer Response"):
+    if st.button("Click here to Predict Customer Response", key="manual_input_predict"):
         result, probabilities = predict(input_df)
         probability = probabilities[0][result[0]] * 100  # Get probability for the predicted class
 
@@ -239,6 +239,7 @@ if input_option == "Manual Input":
         else:
             st.subheader(f'🟢 The Customer :green[will respond] to the offers! Probability: {probability:.2f}% :smiley:')
 
+
 # Mapping predictions to labels
 prediction_mapping = {
     0: "No Response",
@@ -246,29 +247,29 @@ prediction_mapping = {
     2: "Full Response"
 }
 
-# Apply model to make predictions
-st.write("""---""")
-if st.button("Click here to Predict Customer Response"):
-    result, probabilities = predict(input_df)
-    # Map predictions to their labels
-    input_df['Prediction'] = [prediction_mapping[pred] for pred in result]
-    # Add probability for each prediction
-    input_df['Probability'] = [f"{probabilities[i][result[i]] * 100:.2f}%" for i in range(len(result))]
+# Apply model to make predictions for batch input
+if input_option == "Upload Excel File" and uploaded_file:
+    st.write("""---""")
+    if st.button("Click here to Predict Batch Responses", key="batch_input_predict"):
+        result, probabilities = predict(input_df)
+        # Map predictions to their labels
+        input_df['Prediction'] = [prediction_mapping[pred] for pred in result]
+        # Add probability for each prediction
+        input_df['Probability'] = [f"{probabilities[i][result[i]] * 100:.2f}%" for i in range(len(result))]
 
-    # Display results
-    st.write("Prediction Results:")
-    st.dataframe(input_df)
+        st.write("Prediction Results:")
+        st.dataframe(input_df)
 
-    # Save DataFrame to an in-memory buffer for Excel download
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        input_df.to_excel(writer, index=False, sheet_name='Predictions')
-    processed_data = output.getvalue()
+        # Save DataFrame to an in-memory buffer for Excel download
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            input_df.to_excel(writer, index=False, sheet_name='Predictions')
+        processed_data = output.getvalue()
 
-    # Download button for Excel file
-    st.download_button(
-        label="Download Results",
-        data=processed_data,
-        file_name="prediction_results.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+        # Download button for Excel file
+        st.download_button(
+            label="Download Results",
+            data=processed_data,
+            file_name="prediction_results.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
