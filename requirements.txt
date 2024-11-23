@@ -5,3 +5,4 @@ xgboost
 joblib
 imblearn
 openpyxl
+excel_writer
