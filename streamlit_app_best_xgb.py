@@ -114,6 +114,7 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import io
 
 # Set up page config for a better UI
 st.set_page_config(page_title="Starbucks Customer Response Prediction", layout="wide")
@@ -217,13 +218,6 @@ else:
         st.write("Uploaded Data:")
         st.dataframe(input_df)
 
-# Prediction function
-def predict(data):
-    clf = joblib.load("model_file_best_xgb.p")
-    prediction = clf.predict(data)
-    probabilities = clf.predict_proba(data)
-    return prediction, probabilities
-
 # Mapping predictions to labels
 prediction_mapping = {
     0: "No Response",
@@ -244,12 +238,16 @@ if st.button("Click here to Predict Customer Response"):
     st.write("Prediction Results:")
     st.dataframe(input_df)
 
-    # Allow downloading results as an Excel file
-    output_file_path = "prediction_results.xlsx"
-    input_df.to_excel(output_file_path, index=False)
+    # Save DataFrame to an in-memory buffer for Excel download
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        input_df.to_excel(writer, index=False, sheet_name='Predictions')
+    processed_data = output.getvalue()
+
+    # Download button for Excel file
     st.download_button(
         label="Download Results",
-        data=input_df.to_excel(index=False, engine='openpyxl'),
+        data=processed_data,
         file_name="prediction_results.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
